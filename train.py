@@ -18,13 +18,7 @@ logging.basicConfig(format='%(asctime)s -  %(message)s', datefmt='%m/%d/%Y %H:%M
 logger = logging.getLogger(__name__)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-#wandb init, config setting
-wandb.init(project='transformer_1')
-wandb.config = {
-  "learning_rate": 1e-4,
-  "epochs": 50,
-  "batch_size": 64
-}
+
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -156,6 +150,14 @@ def evaluate(model, iterator, criterion):
 
 def main(args):
     if args.mode == "train":
+
+        #wandb init, config setting
+        wandb.init(project='transformer_1')
+        wandb.config = {
+        "learning_rate": args.learning_rate,
+        "epochs": args.epoch,
+        "batch_size": args.batch
+        }
         # Transformer 객체 선언
         model = Transformer(enc, dec, SRC_PAD_IDX, TRG_PAD_IDX, device).to(device)
         print(f'The model has {count_parameters(model):,} trainable parameters')
@@ -192,7 +194,10 @@ def main(args):
     
 
     if args.mode == "test":
-        model.load_state_dict(torch.load("/checkpoint/transformer_german_to_english.pt"))
+        model = Transformer(enc, dec, SRC_PAD_IDX, TRG_PAD_IDX, device).to(device)
+
+        model.load_state_dict(torch.load("./checkpoint/transformer_german_to_english.pt"))
+        criterion = nn.CrossEntropyLoss(ignore_index = TRG_PAD_IDX)
         test_loss = evaluate(model, test_iter, criterion)
 
         print(f'Test Loss: {test_loss:.3f} | Test PPL: {math.exp(test_loss):.3f}')
